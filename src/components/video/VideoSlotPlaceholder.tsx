@@ -9,10 +9,13 @@ export default function VideoSlotPlaceholder({
   expectedPath,
   compact = false,
   poster,
+  kind = "GAMEPLAY",
 }: {
   expectedPath?: string;
   compact?: boolean;
   poster?: string;
+  /** What the slot is for, e.g. "GAMEPLAY" or "INTRO" */
+  kind?: string;
 }) {
   const dev = process.env.NODE_ENV !== "production";
   const file = expectedPath?.split("/").pop() ?? "video.mp4";
@@ -38,7 +41,7 @@ export default function VideoSlotPlaceholder({
       <div className="relative z-10 px-4 text-center" data-font-bold>
         <p className="whitespace-pre text-bracket">{compact ? "[[ ]]" : "[[    ]]]_"}</p>
         <p className={`mt-1 text-loader-pct ${compact ? "!text-[12px]" : ""}`}>
-          {dev ? "GAMEPLAY VIDEO SLOT READY" : "GAMEPLAY FOOTAGE // INCOMING"}
+          {dev ? `${kind} VIDEO SLOT READY` : `${kind} VIDEO // COMING SOON`}
         </p>
         {!compact && (
           <p className="mt-2 !text-[13px] text-gray-500">

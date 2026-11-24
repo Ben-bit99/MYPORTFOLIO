@@ -28,12 +28,23 @@ function Ctl({ label, onClick, children }: { label: string; onClick: () => void;
  * Full player: local MP4/WebM with custom HUD controls (play/pause, mute,
  * scrub, time, fullscreen, keyboard), YouTube/Vimeo embeds, or a slot placeholder.
  */
-export default function ProjectVideoPlayer({ video, title }: { video: VideoConfig; title: string }) {
+export default function ProjectVideoPlayer({
+  video,
+  title,
+  kind,
+  autoPlay = false,
+}: {
+  video: VideoConfig;
+  title: string;
+  kind?: string;
+  /** Start playing with sound as soon as it loads (only after a user click). */
+  autoPlay?: boolean;
+}) {
   const v = useResolvedVideo(video);
   const wrap = useRef<HTMLDivElement>(null);
   const ref = useRef<FsVideo>(null);
   const [playing, setPlaying] = useState(false);
-  const [muted, setMuted] = useState(true);
+  const [muted, setMuted] = useState(!autoPlay);
   const [time, setTime] = useState(0);
   const [dur, setDur] = useState(0);
   const [buffered, setBuffered] = useState(0);
@@ -79,7 +90,7 @@ export default function ProjectVideoPlayer({ video, title }: { video: VideoConfi
   if (v.status === "missing" || error)
     return (
       <div className={frame}>
-        <VideoSlotPlaceholder expectedPath={v.status === "missing" ? v.expectedPath : video.src} poster={v.status === "missing" ? v.poster : undefined} />
+        <VideoSlotPlaceholder kind={kind} expectedPath={v.status === "missing" ? v.expectedPath : video.src} poster={v.status === "missing" ? v.poster : undefined} />
       </div>
     );
   if (v.status === "external")
@@ -87,7 +98,7 @@ export default function ProjectVideoPlayer({ video, title }: { video: VideoConfi
       <div className={frame}>
         <iframe
           src={v.embedUrl}
-          title={`${title} gameplay video`}
+          title={`${title} video`}
           className="absolute inset-0 h-full w-full"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
           allowFullScreen
@@ -106,7 +117,7 @@ export default function ProjectVideoPlayer({ video, title }: { video: VideoConfi
       tabIndex={0}
       onKeyDown={onKey}
       role="group"
-      aria-label={`${title} gameplay video player. Space to play or pause, M to mute, F for fullscreen, arrows to seek.`}
+      aria-label={`${title} video player. Space to play or pause, M to mute, F for fullscreen, arrows to seek.`}
     >
       <video
         ref={ref}
@@ -114,6 +125,7 @@ export default function ProjectVideoPlayer({ video, title }: { video: VideoConfi
         poster={v.poster}
         preload="metadata"
         playsInline
+        autoPlay={autoPlay}
         muted={muted}
         onClick={toggle}
         onPlay={() => setPlaying(true)}

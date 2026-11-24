@@ -30,6 +30,15 @@ ffmpeg -i raw.mov -vf scale=1280:-2 -c:v libx264 -crf 24 -preset slow -an -movfl
 
 (Drop `-an` if you want the gameplay audio. Previews are always muted.)
 
+## 1b. "About me" video
+
+A floating **ABOUT ME // VIDEO** card sits left of the avatar in the About section. Clicking it opens a full-screen player over a blurred view of the page; background music fades out while it's open.
+
+- Drop `public/videos/about-me.mp4` (optional `about-me.webm` and a poster image at `public/images/about-me.jpg`). Restart `npm run dev`, or rebuild for production.
+- Or paste a YouTube/Vimeo link into `profile.introVideo.externalVideoUrl` in `src/data/portfolio.ts`.
+- Until then the card shows **SOON** and the player says "INTRO VIDEO // COMING SOON".
+- Export H.264 MP4 with AAC audio, 1080p or 720p, under about 30 MB, with `-movflags +faststart`. The video starts with sound when opened.
+
 ## 2. Fill in Game Project 02 and 03
 
 In `src/data/portfolio.ts`, find the boxed `PLACEHOLDER — GAME PROJECT 02` comment:

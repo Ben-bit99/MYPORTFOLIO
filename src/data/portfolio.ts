@@ -118,6 +118,18 @@ export const profile = {
   aboutShort:
     "I build immersive games and XR experiences in Unity and C#, turning physics, input and feedback into moments that feel real in your hands.",
 
+  /**
+   * "About me" video: the floating card next to the avatar in the About section.
+   * Drop public/videos/about-me.mp4 (optional .webm + poster), or paste a YouTube/Vimeo
+   * link into externalVideoUrl. Until then the card shows "COMING SOON".
+   */
+  introVideo: {
+    src: "/videos/about-me.mp4",
+    webm: "/videos/about-me.webm",
+    poster: "/images/about-me.jpg",
+    externalVideoUrl: "",
+  } as VideoConfig,
+
   /** About drawer (long form) */
   aboutLong: [
     "I'm Abdul Wahib Rao, a Computer Science student at NED University of Engineering and Technology in Karachi, Pakistan, focused on game development and extended reality (AR/VR).",
@@ -266,7 +278,7 @@ export const otherProjects: OtherProject[] = [
   {
     slug: "shoptrack",
     title: "ShopTrack — E-Commerce Web Application",
-    year: "2024",
+    year: "2025",
     category: "Full-Stack Web",
     techStack: ["HTML", "CSS", "JavaScript", "React", "Node.js", "Express", "MongoDB"],
     highlights: [

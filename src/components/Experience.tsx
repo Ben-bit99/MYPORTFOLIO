@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
 import { lockScroll, measureSections, setLenis, updateScroll } from "@/lib/scroll";
 import { setMood, whoosh } from "@/lib/sound";
 import { frame, getState, setState, useApp } from "@/lib/store";
+import AboutVideo from "./AboutVideo";
 import ChatWidget from "./chat/ChatWidget";
 import CursorReticle from "./CursorReticle";
 import Hud from "./Hud";
@@ -143,6 +144,7 @@ export default function Experience() {
       </main>
       <Hud />
       <Menu />
+      <AboutVideo />
       <Overlays />
       <MemoryForm />
       <MemoryReader />

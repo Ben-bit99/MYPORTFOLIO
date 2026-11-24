@@ -476,6 +476,15 @@ export function setMood(sectionId: string) {
   }
 }
 
+/** Fade the background music out (e.g. while a video with its own sound plays) and back in. */
+export function duckMusic(on: boolean) {
+  const e = engine;
+  if (!e) return;
+  const t = e.ctx.currentTime;
+  e.music.gain.cancelScheduledValues(t);
+  e.music.gain.setTargetAtTime(on ? 0 : 0.9, t, on ? 0.25 : 0.8);
+}
+
 function blip(freq: number, dur: number, vol: number, type: OscillatorType = "sine") {
   if (!enabled || !engine) return;
   const { ctx, sfx } = engine;
