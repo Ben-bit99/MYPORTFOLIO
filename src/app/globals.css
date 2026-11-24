@@ -1,0 +1,437 @@
+@import "tailwindcss";
+
+@theme {
+  --spacing: 8px;
+  --font-display: var(--font-chakra), "Space Grotesk", system-ui, sans-serif;
+  --font-sans: var(--font-grotesk), system-ui, sans-serif;
+  --font-mono: var(--font-jet), ui-monospace, monospace;
+  --color-bracket: #3d4757;
+  --color-hl-about: #a9bccf;
+  --color-hl-works: #155dfc;
+  --color-hl-vault: #43b9c6;
+  --color-ink: #e9eff5;
+  --color-ink-dim: #9aa7b5;
+  --color-loader-hl: #7f9eb3;
+  --color-loader-pct: #d9eaf5;
+  --color-loader-cap: #30383e;
+  --color-amber: #f99c00;
+  --ease-hud: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root {
+  color-scheme: dark;
+  --bg: #000;
+  --text: #e5e7eb;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-size: 18px;
+  line-height: 1.5;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  -webkit-font-smoothing: antialiased;
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+/* Lenis */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: clip;
+}
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
+body.is-locked {
+  overflow: hidden;
+}
+
+/* The reference's signature text style (base layer so utilities can override) */
+@layer base {
+  /* Technical HUD voice: JetBrains Mono, never thinner than 500 */
+  [data-font-bold] {
+    font-family: var(--font-mono);
+    letter-spacing: 0.06em;
+    font-weight: 600;
+    font-size: 15px;
+    line-height: 1.35;
+  }
+}
+
+@layer components {
+.hud-small {
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* Readability scrim behind scene text: a soft dark pool (not a panel) + text halo */
+.scrim {
+  position: relative;
+  isolation: isolate;
+  text-shadow: 0 0 22px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.75), 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+.scrim::before {
+  content: "";
+  position: absolute;
+  inset: -64px -96px;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(closest-side, rgba(2, 6, 12, 0.7), rgba(2, 6, 12, 0.36) 55%, transparent);
+  filter: blur(6px);
+}
+
+/* Paragraph copy over scenes: calmer tracking, taller leading, comfortable measure */
+.copy,
+.copy[data-font-bold] {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: clamp(16px, 0.4vw + 12.5px, 19px);
+  letter-spacing: 0.002em;
+  line-height: 1.6;
+  color: var(--color-ink);
+  max-width: 44ch;
+}
+
+/* Display voice: Chakra Petch, uppercase, tight */
+.display,
+.display[data-font-bold] {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+/* HUD pill: dark translucent backing + accent bar, for labels over bright 3D */
+.hud-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px 9px 18px;
+  background: rgba(3, 8, 14, 0.66);
+  border: 1px solid rgba(160, 200, 230, 0.22);
+  border-radius: 2px;
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  text-shadow: none;
+}
+.hud-pill::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: var(--pill-accent, #3dffa8);
+  box-shadow: 0 0 10px var(--pill-accent, #3dffa8);
+}
+
+/* Section keyword highlight inside bracket headings: a faint glow of its own colour */
+[class*="text-hl-"],
+.text-loader-pct.hl {
+  text-shadow: 0 0 16px color-mix(in srgb, currentColor 55%, transparent), 0 0 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Animated underline for HUD text links */
+.hud-link {
+  background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
+  transition: background-size 0.45s var(--ease-hud), color 0.3s ease, opacity 0.3s ease;
+  padding-bottom: 2px;
+}
+.hud-link:hover,
+.hud-link:focus-visible {
+  background-size: 100% 1px;
+}
+
+/* ── HUD frame: hairlines + L-shaped corner brackets (buttons, panels) ── */
+.hud-frame {
+  position: relative;
+}
+.hud-frame > .hud-line {
+  position: absolute;
+  background-color: rgba(255, 255, 255, 0.1);
+  transition: background-color 0.4s ease;
+  pointer-events: none;
+}
+.hud-frame:hover > .hud-line,
+.hud-frame:focus-visible > .hud-line,
+.hud-frame[data-active="true"] > .hud-line {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+.hud-frame > .hud-line:nth-of-type(1) { top: 0; left: 0; width: 100%; height: 1px; }
+.hud-frame > .hud-line:nth-of-type(2) { top: 0; right: 0; width: 1px; height: 100%; }
+.hud-frame > .hud-line:nth-of-type(3) { bottom: 0; left: 0; width: 100%; height: 1px; }
+.hud-frame > .hud-line:nth-of-type(4) { top: 0; left: 0; width: 1px; height: 100%; }
+/* 8 corner strokes: two per corner, carried by the four hairlines' pseudo-elements */
+.hud-frame > .hud-line::before,
+.hud-frame > .hud-line::after {
+  content: "";
+  position: absolute;
+  background: rgba(255, 255, 255, 0.85);
+  transition: width 0.45s var(--ease-hud), height 0.45s var(--ease-hud), box-shadow 0.45s ease;
+}
+.hud-frame > .hud-line:nth-of-type(1)::before,
+.hud-frame > .hud-line:nth-of-type(1)::after,
+.hud-frame > .hud-line:nth-of-type(3)::before,
+.hud-frame > .hud-line:nth-of-type(3)::after { top: -0.5px; width: 8px; height: 2px; }
+.hud-frame > .hud-line:nth-of-type(1)::before,
+.hud-frame > .hud-line:nth-of-type(3)::before { left: 0; }
+.hud-frame > .hud-line:nth-of-type(1)::after,
+.hud-frame > .hud-line:nth-of-type(3)::after { right: 0; }
+.hud-frame > .hud-line:nth-of-type(2)::before,
+.hud-frame > .hud-line:nth-of-type(2)::after,
+.hud-frame > .hud-line:nth-of-type(4)::before,
+.hud-frame > .hud-line:nth-of-type(4)::after { left: -0.5px; width: 2px; height: 8px; }
+.hud-frame > .hud-line:nth-of-type(2)::before,
+.hud-frame > .hud-line:nth-of-type(4)::before { top: 0; }
+.hud-frame > .hud-line:nth-of-type(2)::after,
+.hud-frame > .hud-line:nth-of-type(4)::after { bottom: 0; }
+.hud-frame:hover > .hud-line:nth-of-type(odd)::before,
+.hud-frame:hover > .hud-line:nth-of-type(odd)::after,
+.hud-frame:focus-visible > .hud-line:nth-of-type(odd)::before,
+.hud-frame:focus-visible > .hud-line:nth-of-type(odd)::after { width: 14px; box-shadow: 0 0 8px rgba(170, 230, 255, 0.6); }
+.hud-frame:hover > .hud-line:nth-of-type(even)::before,
+.hud-frame:hover > .hud-line:nth-of-type(even)::after,
+.hud-frame:focus-visible > .hud-line:nth-of-type(even)::before,
+.hud-frame:focus-visible > .hud-line:nth-of-type(even)::after { height: 14px; box-shadow: 0 0 8px rgba(170, 230, 255, 0.6); }
+
+/* Button sheen: a soft light sweep on hover */
+.hud-btn {
+  overflow: hidden;
+  transition: background-color 0.4s ease, color 0.3s ease, letter-spacing 0.45s var(--ease-hud);
+}
+.hud-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent 30%, rgba(170, 225, 255, 0.13) 50%, transparent 70%);
+  transform: translateX(-110%);
+  transition: transform 0.8s var(--ease-hud);
+}
+.hud-btn:hover::after,
+.hud-btn:focus-visible::after {
+  transform: translateX(110%);
+}
+.hud-btn:hover {
+  color: #fff;
+}
+}
+
+:focus-visible {
+  outline: 1px solid var(--color-loader-hl);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: rgba(127, 158, 179, 0.45);
+  color: #fff;
+}
+
+/* Thin custom scrollbars inside panels */
+.hud-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+/* Badge shimmer: slow idle sweep, faster on row hover */
+.badge-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 214, 140, 0.35) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: badge-sweep 4.5s ease-in-out infinite;
+}
+.group:hover .badge-shimmer::after {
+  animation-duration: 1.4s;
+}
+@keyframes badge-sweep {
+  0%, 60% { transform: translateX(-120%); }
+  100% { transform: translateX(120%); }
+}
+
+/* Timeline year pills */
+.year-pill {
+  padding: 5px 11px;
+  font-size: 11px !important;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: #8fa3b8;
+  background: rgba(3, 8, 14, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+  backdrop-filter: blur(6px);
+  transition: color 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease, background-color 0.35s ease;
+}
+.year-pill:hover,
+.year-pill:focus-visible,
+.year-pill[data-active="true"] {
+  color: #fff;
+  border-color: rgba(159, 212, 255, 0.6);
+  background: rgba(10, 24, 38, 0.75);
+  box-shadow: 0 0 18px rgba(159, 212, 255, 0.22);
+}
+
+/* ── HUD cursor reticle (desktop, fine pointer only) ── */
+html.has-reticle,
+html.has-reticle * {
+  cursor: none !important;
+}
+html.has-reticle input,
+html.has-reticle textarea,
+html.has-reticle select,
+html.has-reticle [contenteditable="true"] {
+  cursor: text !important;
+}
+.reticle-dot,
+.reticle-ring,
+.reticle-tag {
+  position: fixed;
+  left: 0;
+  top: 0;
+  will-change: transform;
+  transition: opacity 0.25s ease;
+}
+.reticle-dot {
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+  background: #e9f6ff;
+  box-shadow: 0 0 8px rgba(160, 225, 255, 0.9);
+}
+.reticle-ring {
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px;
+  border: 1px solid rgba(200, 230, 255, 0.45);
+  border-radius: 50%;
+  transition: opacity 0.25s ease, border-color 0.35s ease, background-color 0.35s ease;
+}
+.reticle-ring::before,
+.reticle-ring::after {
+  content: "";
+  position: absolute;
+  background: rgba(200, 230, 255, 0.55);
+}
+.reticle-ring::before { left: 50%; top: -5px; width: 1px; height: 4px; }
+.reticle-ring::after { top: 50%; left: -5px; width: 4px; height: 1px; }
+.reticle-ring.is-active {
+  border-color: rgba(61, 255, 168, 0.8);
+  background: rgba(61, 255, 168, 0.06);
+}
+.reticle-tag {
+  padding: 3px 7px;
+  font-size: 10px !important;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: #d8fbe9;
+  background: rgba(3, 8, 14, 0.78);
+  border: 1px solid rgba(61, 255, 168, 0.35);
+  white-space: nowrap;
+  opacity: 0;
+}
+
+/* AI trigger: illuminated frame on hover */
+.ai-trigger {
+  transition: box-shadow 0.45s ease, background-color 0.45s ease;
+}
+.ai-trigger:hover,
+.ai-trigger:focus-visible {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 26px rgba(61, 255, 168, 0.16), inset 0 0 0 1px rgba(61, 255, 168, 0.28);
+}
+
+/* Scroll cue line */
+.scroll-line {
+  position: relative;
+  display: block;
+  width: 1px;
+  height: 28px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.12);
+}
+.scroll-line::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: -40%;
+  width: 1px;
+  height: 40%;
+  background: linear-gradient(to bottom, transparent, #d9eaf5);
+  animation: scroll-line 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+@keyframes scroll-line {
+  to { top: 100%; }
+}
+
+/* Sound equaliser (HUD) */
+.eq {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 10px;
+}
+.eq > span {
+  width: 2px;
+  height: 2px;
+  background: currentColor;
+  opacity: 0.8;
+  transition: height 0.3s ease;
+}
+.eq-on > span {
+  animation: eq 1.1s ease-in-out infinite;
+}
+.eq-on > span:nth-child(2) { animation-delay: -0.35s; animation-duration: 0.9s; }
+.eq-on > span:nth-child(3) { animation-delay: -0.7s; animation-duration: 1.3s; }
+@keyframes eq {
+  0%, 100% { height: 3px; }
+  50% { height: 10px; }
+}
+
+/* Pulse used by the AI trigger status dot */
+@keyframes hud-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.7); }
+}
+.animate-hud-pulse {
+  animation: hud-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes caret {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.caret::after {
+  content: "_";
+  animation: caret 1s steps(1) infinite;
+  margin-left: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

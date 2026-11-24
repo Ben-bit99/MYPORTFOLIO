@@ -1,0 +1,19 @@
+node_modules
+.next
+out
+.env*.local
+.env
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store
+
+# Reference screenshots (audit only, never ship)
+reference/
+
+# Local guestbook storage
+.data/
+.lab/
+
+# Packaging artifacts
+*.zip
+preview-*.png
