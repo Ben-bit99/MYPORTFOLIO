@@ -111,7 +111,20 @@ Without these settings, the form tells visitors it isn't configured yet and show
 ## 7. Music
 
 - By default the site plays a **generative score** that changes mood per section: a dark minor mood in the city, brighter in Works and the Timeline, and crystalline in the Vault and Memories. Visitors toggle it with "Sound: On/Off".
-- **Use your own track:** put an MP3 at `public/audio/theme.mp3` and it replaces the generative pads automatically. UI sounds and bells still play. Only use music you have the rights to, for example a royalty-free track from Pixabay Music or a CC0 piece. Don't take audio from another website.
+- **Use your own music.** Create the folder `public/audio/` and add MP3 files named after sections:
+
+  | File | Plays in |
+  |---|---|
+  | `hero.mp3` | Landing (city) |
+  | `about.mp3` | About |
+  | `works.mp3` | Works |
+  | `timeline.mp3` | Timeline |
+  | `vault.mp3` | Awards |
+  | `memories.mp3` | Memories |
+  | `contact.mp3` | Contact |
+  | `theme.mp3` | Every section without its own file |
+
+  Add only the files you want, e.g. just `theme.mp3` and `memories.mp3`. A section with neither its own file nor a `theme.mp3` keeps the generative score. Tracks crossfade (about 1.6 s) when the visitor scrolls, loop, and resume where they left off. UI sounds still play. Keep each file small (128–192 kbps MP3, ideally under 5 MB), and only use music you have the rights to, e.g. royalty-free tracks from Pixabay Music or CC0 pieces.
 
 ## 8. Quality flags
 

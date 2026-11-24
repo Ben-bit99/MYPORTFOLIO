@@ -7,8 +7,13 @@
  *  a long synthetic reverb. Each section has its own "mood" (key, chords, tempo,
  *  brightness, rain), and moods crossfade on the next chord change.
  *
- *  Your own track: drop `public/audio/theme.mp3` (a file you have the rights to)
- *  and it replaces the generative pads automatically; UI sounds still play.
+ *  Your own music (files you have the rights to), in `public/audio/`:
+ *    - `<section>.mp3` plays only in that section: hero, about, works, timeline,
+ *      vault, memories, contact (e.g. `memories.mp3`).
+ *    - `theme.mp3` plays in every section that has no file of its own.
+ *    - A section with neither keeps the generative score.
+ *  Tracks crossfade when the visitor scrolls between sections and each resumes
+ *  where it left off. UI sounds always play.
  */
 
 type Mood = {
@@ -111,8 +116,9 @@ type Engine = {
   padFilter: BiquadFilterNode;
   rainGain: GainNode;
   noiseBuf: AudioBuffer;
-  track: HTMLAudioElement | null;
 };
+
+type Track = { el: HTMLAudioElement; gain: GainNode };
 
 let engine: Engine | null = null;
 let enabled = false;
@@ -122,6 +128,88 @@ let nextChordAt = 0;
 let timer: ReturnType<typeof setInterval> | null = null;
 let activePad: { stop: (t: number) => void } | null = null;
 let useTrack = false;
+
+/* ── Per-section music files ── */
+const TRACK_SECTIONS = ["hero", "about", "works", "timeline", "vault", "memories", "contact"] as const;
+const TRACK_VOL = 0.8;
+const FADE = 1.6; // seconds
+let section = "hero";
+let trackUrls: Record<string, string | null> | null = null; // section → file (null = generative)
+const tracks = new Map<string, Track>();
+let currentUrl: string | null = null;
+
+async function exists(url: string) {
+  try {
+    const r = await fetch(url, { method: "HEAD" });
+    return r.ok && !(r.headers.get("content-type") ?? "").includes("text/html");
+  } catch {
+    return false;
+  }
+}
+
+async function discoverTracks() {
+  const [theme, ...own] = await Promise.all([
+    exists("/audio/theme.mp3"),
+    ...TRACK_SECTIONS.map((s) => exists(`/audio/${s}.mp3`)),
+  ]);
+  const map: Record<string, string | null> = {};
+  TRACK_SECTIONS.forEach((s, i) => (map[s] = own[i] ? `/audio/${s}.mp3` : theme ? "/audio/theme.mp3" : null));
+  trackUrls = map;
+  syncTrack();
+}
+
+function getTrack(e: Engine, url: string): Track {
+  let t = tracks.get(url);
+  if (!t) {
+    const el = new Audio(url);
+    el.loop = true;
+    el.preload = "auto";
+    el.crossOrigin = "anonymous";
+    const gain = e.ctx.createGain();
+    gain.gain.value = 0;
+    e.ctx.createMediaElementSource(el).connect(gain).connect(e.music);
+    t = { el, gain };
+    tracks.set(url, t);
+  }
+  return t;
+}
+
+/** Crossfade to the file for the current section (or back to the generative score). */
+function syncTrack() {
+  const e = engine;
+  if (!e || !trackUrls) return;
+  const url = trackUrls[section] ?? trackUrls.hero ?? null;
+  const now = e.ctx.currentTime;
+  if (url !== currentUrl) {
+    if (currentUrl) {
+      const old = tracks.get(currentUrl);
+      if (old) {
+        old.gain.gain.cancelScheduledValues(now);
+        old.gain.gain.setValueAtTime(old.gain.gain.value, now);
+        old.gain.gain.linearRampToValueAtTime(0, now + FADE);
+        const el = old.el;
+        const was = currentUrl;
+        setTimeout(() => currentUrl !== was && el.pause(), FADE * 1000 + 100);
+      }
+    }
+    currentUrl = url;
+    useTrack = !!url;
+    if (url) {
+      activePad?.stop(now);
+      activePad = null;
+      const t = getTrack(e, url);
+      t.gain.gain.cancelScheduledValues(now);
+      t.gain.gain.setValueAtTime(t.gain.gain.value, now);
+      t.gain.gain.linearRampToValueAtTime(TRACK_VOL, now + FADE);
+    } else if (enabled) {
+      nextChordAt = now + 0.3; // bring the generative pads straight back
+    }
+  }
+  if (url) {
+    const el = tracks.get(url)!.el;
+    if (enabled && el.paused) void el.play().catch(() => {});
+  }
+}
 
 function makeNoise(ctx: AudioContext, seconds = 4) {
   const buf = ctx.createBuffer(1, ctx.sampleRate * seconds, ctx.sampleRate);
@@ -224,25 +312,9 @@ function init(): Engine | null {
   rain.connect(rf).connect(rainGain).connect(music);
   rain.start();
 
-  engine = { ctx, master, music, sfx, reverb, reverbSend, delaySend, padFilter, rainGain, noiseBuf, track: null };
+  engine = { ctx, master, music, sfx, reverb, reverbSend, delaySend, padFilter, rainGain, noiseBuf };
 
-  // Optional user-supplied track
-  void fetch("/audio/theme.mp3", { method: "HEAD" })
-    .then((r) => {
-      if (!r.ok || (r.headers.get("content-type") ?? "").includes("text/html")) return;
-      const el = new Audio("/audio/theme.mp3");
-      el.loop = true;
-      el.crossOrigin = "anonymous";
-      const src = ctx.createMediaElementSource(el);
-      const g = ctx.createGain();
-      g.gain.value = 0.8;
-      src.connect(g).connect(music);
-      engine!.track = el;
-      useTrack = true;
-      activePad?.stop(ctx.currentTime + 0.1);
-      if (enabled) void el.play().catch(() => {});
-    })
-    .catch(() => {});
+  void discoverTracks();
 
   return engine;
 }
@@ -380,16 +452,21 @@ export function setSoundEnabled(on: boolean) {
   e.master.gain.setTargetAtTime(on ? 0.55 : 0, t, on ? 1.2 : 0.25);
   if (on) {
     startScheduler();
-    if (e.track) void e.track.play().catch(() => {});
+    syncTrack();
   } else {
-    setTimeout(() => !enabled && stopScheduler(), 600);
-    e.track?.pause();
+    setTimeout(() => {
+      if (enabled) return;
+      stopScheduler();
+      tracks.forEach((t) => t.el.pause());
+    }, 600);
   }
 }
 
 /** Switch the score to the mood of a section; lands on the next bar quickly. */
-export function setMood(section: string) {
-  const next = SECTION_MOOD[section] ?? "city";
+export function setMood(sectionId: string) {
+  section = sectionId;
+  syncTrack();
+  const next = SECTION_MOOD[sectionId] ?? "city";
   if (next === mood) return;
   mood = next;
   chordIdx = 0;
