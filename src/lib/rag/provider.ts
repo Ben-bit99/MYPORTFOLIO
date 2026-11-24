@@ -10,7 +10,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 export type ProviderName = "google" | "openai";
 
 const DEFAULTS: Record<ProviderName, { chat: string; embedding: string }> = {
-  google: { chat: "gemini-2.5-flash", embedding: "gemini-embedding-001" },
+  google: { chat: "gemini-3.8-flash", embedding: "gemini-embedding-001" },
   openai: { chat: "gpt-4.1-mini", embedding: "text-embedding-3-small" },
 };
 

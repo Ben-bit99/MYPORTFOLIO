@@ -92,10 +92,26 @@ export default function ChatWidget() {
           }
         }
         if (!acc.trim()) {
-          patch({
-            content: `The assistant couldn't answer right now. You can reach Abdul Wahib directly at ${profile.email}.`,
-            error: true,
-          });
+          // AI provider failed mid-stream → ask the server for a grounded offline answer instead.
+          const fb = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-rag-fallback": "1" },
+            body: JSON.stringify({ messages: history.slice(-20) }),
+            signal: ctrl.signal,
+          }).catch(() => null);
+          const text = fb && fb.ok ? await fb.text() : "";
+          if (text.trim()) {
+            let fbSources: SourceRef[] = [];
+            try {
+              fbSources = JSON.parse(decodeURIComponent(fb!.headers.get("X-Sources") ?? "[]"));
+            } catch {}
+            patch({ content: text, sources: fbSources, mode: "offline-fallback" });
+          } else {
+            patch({
+              content: `The assistant couldn't answer right now. You can reach Abdul Wahib directly at ${profile.email}.`,
+              error: true,
+            });
+          }
         }
       } catch (e) {
         if ((e as Error).name !== "AbortError") patch({ content: "Network error. Please try again.", error: true });

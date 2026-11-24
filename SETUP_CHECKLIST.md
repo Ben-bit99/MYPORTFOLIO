@@ -60,7 +60,7 @@ npm run rag:index      # embeds the portfolio → src/data/rag-index.json
 - **Re-run `npm run rag:index` whenever you edit `portfolio.ts` or `src/data/knowledge/`.** If you forget, the bot notices that the index is stale and falls back to keyword search over the fresh data, so it never gives outdated facts, but you lose vector search.
 - **No key?** The bot still works in *offline mode*: it replies with the most relevant portfolio excerpts, clearly labelled.
 - **Extra knowledge:** add `.md` files to `src/data/knowledge/`. Each `#` heading becomes a citable chunk. **Review `availability.md`.** I wrote it as a starter, and it says you're open to game, XR and gameplay-programming roles and internships. Edit it or delete it if that's not accurate.
-- **Model names** default to `gemini-2.5-flash` / `gemini-embedding-001` (Google) or `gpt-4.1-mini` / `text-embedding-3-small` (OpenAI). If a provider retires one, set `CHAT_MODEL` / `EMBEDDING_MODEL` in `.env.local`, then re-run the index.
+- **Model names** default to `gemini-3.8-flash` / `gemini-embedding-001` (Google) or `gpt-4.1-mini` / `text-embedding-3-small` (OpenAI). If a provider retires one, set `CHAT_MODEL` / `EMBEDDING_MODEL` in `.env.local`, then re-run the index.
 - Rate limit: `CHAT_RATE_LIMIT_PER_MIN` (default 15 per IP). It is in-memory, so on serverless it is per instance. Use Upstash or Redis if you get real traffic.
 
 ## 6. Guestbook ("Room of Echoes")

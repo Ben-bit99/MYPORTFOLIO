@@ -73,7 +73,7 @@ CONTEXT:
 ${context}`;
 
 /** Used when no API key is configured: an extractive, grounded answer. */
-function offlineAnswer(chunks: RetrievedChunk[]): string {
+function offlineAnswer(chunks: RetrievedChunk[], aiDown = false): string {
   if (!chunks.length) {
     return `I couldn't find that in Abdul Wahib's portfolio. You can ask him directly at ${profile.email}.`;
   }
@@ -84,7 +84,10 @@ function offlineAnswer(chunks: RetrievedChunk[]): string {
       return `${c.title}\n${text}`;
     })
     .join("\n\n");
-  return `Here's what the portfolio says:\n\n${body}\n\n(Offline mode: no AI key is configured, so these are direct excerpts.)`;
+  const note = aiDown
+    ? "(The AI assistant is temporarily unavailable, so these are direct excerpts from the portfolio.)"
+    : "(Offline mode: no AI key is configured, so these are direct excerpts.)";
+  return `Here's what the portfolio says:\n\n${body}\n\n${note}`;
 }
 
 export async function POST(req: Request) {
@@ -140,6 +143,12 @@ export async function POST(req: Request) {
   };
   if (stale) headers["X-Rag-Stale"] = "1";
 
+  const forcedFallback = req.headers.get("x-rag-fallback") === "1";
+  if (forcedFallback) {
+    headers["X-Rag-Mode"] = "offline-fallback";
+    return new Response(offlineAnswer(chunks, true), { headers });
+  }
+
   if (!models) {
     if (process.env.NODE_ENV !== "production") {
       console.info("[chat] No GOOGLE_GENERATIVE_AI_API_KEY / OPENAI_API_KEY set → offline extractive mode.");
@@ -159,7 +168,19 @@ export async function POST(req: Request) {
       temperature: 0.2,
       maxOutputTokens: 450,
       abortSignal: req.signal,
-      onError: ({ error }) => console.error("[chat] stream error:", error),
+      onError: ({ error }) => {
+        const msg = (error as Error)?.message ?? String(error);
+        const hint = /not found|not supported|404/i.test(msg)
+          ? `model "${models.cfg.chatModelId}" isn't available on this key — set CHAT_MODEL in .env.local to a current model`
+          : /api key|401|403|permission/i.test(msg)
+            ? "the API key was rejected — re-copy it into .env.local (no spaces or quotes) and restart"
+            : /quota|429|exhausted|rate/i.test(msg)
+              ? "quota / rate limit reached — wait a minute or check your provider dashboard"
+              : /location|region/i.test(msg)
+                ? "this provider isn't available in your region — try AI_PROVIDER=openai"
+                : "see the message above";
+        console.error(`[chat] ${models.cfg.name}/${models.cfg.chatModelId} failed: ${msg.slice(0, 300)}\n[chat] hint: ${hint}`);
+      },
     });
     return result.toTextStreamResponse({ headers });
   } catch (err) {
